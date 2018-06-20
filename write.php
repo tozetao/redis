@@ -1,13 +1,17 @@
 <?php
 
-//file_put_contents(__DIR__ . '/content.log', "12345\n", FILE_APPEND);
-
+function microtime_float()
+{
+    list($usec, $sec) = explode(" ", microtime());
+    return ((float)$usec + (float)$sec);
+}
 
 function record($data = null)
 {
     if(!empty($data))
     {
-        $date = date('Y-m-d H:i:s', time());
+//        $date = date('Y-m-d H:i:s', time());
+        $date = microtime_float();
         file_put_contents('write.log', $date . '：' . $data . "\n", FILE_APPEND);
     }
 }
