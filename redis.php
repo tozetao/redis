@@ -16,7 +16,7 @@ if($nums > 1)
 
 //测试计数器，假设nums = 100，并发请求100次
 //$nums = $redis->get('nums');
-//$nums++;
+//$nums--;
 //$redis->set('nums', $nums);
 //并发情况下会读取到多个相同的结果，再赋值是就会发生错误。
 
