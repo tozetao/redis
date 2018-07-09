@@ -3,6 +3,10 @@
 $redis = new Redis();
 $redis->connect('127.0.0.1', 6379);
 
+$nums = $redis->get('nums');
+$nums++;
+$redis->set('nums', $nums);
+
 /*
 //测试1：先读取再递减
 $nums = $redis->get('nums');
