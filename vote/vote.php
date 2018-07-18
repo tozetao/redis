@@ -74,7 +74,7 @@ function getTopArticles($page)
 
 数据结构
     1. 俩个有序集合zset
-        一个以文件发布时间为分数，一个以评分为分数。
+        一个以文章发布时间为分数存储文章集合，一个以赞票统计的评分为分数存储文章集合
 
         time:article_id
         score:article_id
