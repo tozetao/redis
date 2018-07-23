@@ -13,6 +13,9 @@ function getRedis()
  */
 function listenItem($itemId, $sallerId, $price)
 {
+    $redis = getRedis();
+    $redis->watch();
+
     //1. watch 用户包裹key
     //2. 判断商品是否在包裹中
     //3. 开启事务，将商品添加到市场key中
