@@ -9,14 +9,7 @@ function getRedis()
 
 function acquireLock($lockName, $timeout=10)
 {
-    $redis = getRedis();
 
-    $redis = $redis->multi();
-    $redis->set('name', 'hello world');
-    $redis->get('name');
-    $result = $redis->exec();
-
-    var_dump($result);
 }
 
 acquireLock('');

@@ -7,7 +7,7 @@ require dirname(__DIR__) . '/common.php';
  * 获取锁失败的话将会在过期时间内尝试获取加锁操作，直到时间过期或者加锁成功
  *
  * @param $lockName
- * @param int $timeout
+ * @param int $timeout    锁的超时时间，同时也决定了程序获取锁阻塞的最大时间
  * @return bool|string
  */
 function acquireLock($lockName, $timeout = 10)
@@ -18,10 +18,18 @@ function acquireLock($lockName, $timeout = 10)
     $end   = $start + $timeout;
     $uuid = uniqid();
 
+    $key = 'lock:' . $lockName;
+
     while($start <= $end)
     {
-        if($redis->setnx('lock:' . $lockName, $uuid))
+        if($redis->setnx($key, $uuid))
+        {
+            $timeout = ceil($timeout);
+            $redis->expire($key, $timeout);
             return $uuid;
+        }
+        else if($redis->ttl($key) === -2)
+            $redis->expire($key, $timeout);
 
         //睡眠0.001秒，1秒 = 1000000微秒
         usleep(1000);
@@ -45,9 +53,9 @@ function releaseLock($lockName, $uuid)
     while(true)
     {
         $redis->watch($lockName);
-        $redis->multi();
         if($redis->get($lockName) == $uuid)
         {
+            $redis->multi();
             $redis->delete($lockName);
             $redis->exec();
             return true;
@@ -57,4 +65,35 @@ function releaseLock($lockName, $uuid)
     }
 
     return false;
+
+//这里写个while循环不是很懂
+//监视加锁的key是为了防止key的值被修改，导致误删除key。
 }
+
+//目前的实现，如果程序获得锁后奔溃，在没释放锁的情况下会发生死锁，锁一直被占用而没有释放，导致其他程序阻塞。
+
+function testLock()
+{
+    //对某个资源进行加锁
+    $rankKey = 'rank';
+    $uuid = acquireLock($rankKey);
+
+    if(!$uuid)
+        exit('lock error!');
+    else
+        echo "get lock!\n";
+
+    //执行一系列操作
+    $redis = Singer::getInstance();
+    $redis->multi()->set('address', 'shanghai')->exec();
+    sleep(5);
+    $result = releaseLock($rankKey, $uuid);
+    var_dump($result);
+}
+
+$redis = Singer::getInstance();
+$r = $redis->ttl('type');
+var_dump($r);
+
+//var_dump($redis->get('lock:rank'));
+//testLock();

@@ -7,7 +7,7 @@ function getRedis()
     return $redis;
 }
 
-function acquireLock($lockName, $timeout=10)
+function setName()
 {
     $redis = getRedis();
 
@@ -17,8 +17,24 @@ function acquireLock($lockName, $timeout=10)
     $redis->get('name');
     sleep(5);
     $result = $redis->exec();
-
     var_dump($result);
 }
 
-acquireLock('qwer');
+function changeName()
+{
+    $redis = getRedis();
+
+    $redis = $redis->multi();
+    $redis->set('name', 'hello world');
+    $redis->get('name');
+    $result = $redis->exec();
+    var_dump($result);
+}
+
+$method = $argv[1];
+$routes = ['setName', 'changeName'];
+
+if(in_array($method, $routes))
+{
+    $method();
+}
