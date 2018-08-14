@@ -70,8 +70,6 @@ function releaseLock($lockName, $uuid)
 //监视加锁的key是为了防止key的值被修改，导致误删除key。
 }
 
-//目前的实现，如果程序获得锁后奔溃，在没释放锁的情况下会发生死锁，锁一直被占用而没有释放，导致其他程序阻塞。
-
 function testLock()
 {
     //对某个资源进行加锁
