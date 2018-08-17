@@ -3,7 +3,7 @@ include_once "../common.php";
 
 //function acquireSemaphore($key, $limit, $timeout=10){}
 
-function semaphoreLock($key, $limit, $timeout = 10)
+function semaphoreLock($key, $limit, $timeout = 5)
 {
     $key = 'lock:' . $key;
     $uuid = uniqid();
@@ -14,14 +14,17 @@ function semaphoreLock($key, $limit, $timeout = 10)
 
     //移除过期的成员
     $redis->zremrangebyscore($key, '-inf', $now - $timeout);
-    $redis->zadd($key, $now, $uuid,);
+    $redis->zadd($key, $now, $uuid);
     $redis->zrank($key, $uuid);
     $result = $redis->exec();
-    if($result && $result[2] < $limit)
+    if($result && $result[2] < $limit) {
+        $content = time() . ': ' . $result[2];
+        writeLog('./log1', $content);
         return $uuid;
+    }
 
     $redis->zrem($key, $uuid);
-    return false;
+    return 'false';
 }
 
 function releaseLock($key, $uuid)
@@ -31,31 +34,43 @@ function releaseLock($key, $uuid)
     return $redis->zRem($key, $uuid);
 }
 
-function test()
-{
-    $uuid = semaphoreLock('test', 1);
+function writeLog($filename, $data) {
+    $content = $data . "\n";
+    file_put_contents($filename, $content, FILE_APPEND);
+}
 
-    var_dump($uuid);
-    sleep(5);
+// 1. 测试限制是否生效
+// 事务会将多个redis操作作为一个单元来进行执行
+// 限制最多2个信号量，测试是否能够限制成功
+function test() {
+    for($i =0; $i < 1000; $i++){
+        $uuid = semaphoreLock('test', 2, 5);
+        $content = time() . ': ' . $uuid;
+        writeLog('./log', $content);
 
-    $r = releaseLock('test', $uuid);
-    var_dump($r);
+        //如果释放uuid，可以正常运行。
+    }
 }
 
 
-test();
 
-/*
-$obj = Singer::getInstance();
-$obj->zAdd('r1', time(), 'z1');
-$obj->zAdd('r1', time(), 'z2');
+// 2. 测试超时是否生效
+// 设置过期时间为5秒，允许获取的最大信号量为2，每间隔10秒获取10次信号量，获取的信号量不释放，判断后续的请求是否能正常获取信号量
+$count = 1;
+$s = 1;
+while($count < 10) {
+    for($i = 0; $i < 10; $i++) {
+        $uuid = semaphoreLock('test', 2, 5);
+        $content = time() . ': ' . $uuid;
+        writeLog('./log', $content);
+    }
 
-$r = $obj->zRem('r1', 'z1');
-var_dump($r);
+    while($s <= 10) {
+        echo "sleep $s \n";
+        $s++;
+        sleep(1);
+    }
 
-$r = $obj->zRem('r1', 'z2');
-var_dump($r);
-
-$r = $obj->zRem('r1', 'z3');
-var_dump($r);
-*/
+    $s = 1;
+    $count++;
+}
