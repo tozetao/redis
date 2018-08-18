@@ -50,21 +50,26 @@ function releaseLock($lockName, $uuid)
 function testLock()
 {
     //对某个资源进行加锁
-    $rankKey = 'rank';
-    $uuid = acquireLock($rankKey);
-
-    if(!$uuid)
-        exit('lock error!');
-    else
-        echo "get lock!\n";
-
-    //执行一系列操作
-    $redis = Singer::getInstance();
-    $redis->multi()->set('address', 'shanghai')->exec();
-
-    sleep(5);
-    $result = releaseLock($rankKey, $uuid);
-    var_dump($result);
+//    $rankKey = 'rank';
+//    $uuid = acquireLock($rankKey);
+//
+//    if(!$uuid)
+//        exit('lock error!');
+//    else
+//        echo "get lock!\n";
+//
+//    //执行一系列操作
+//    $redis = Singer::getInstance();
+//    $redis->multi()->set('address', 'shanghai')->exec();
+//
+//    sleep(5);
+//    $result = releaseLock($rankKey, $uuid);
+//    var_dump($result);
+    for ($i=0; $i<10; $i++) {
+        $uuid = acquireLock('d1');
+        echo $uuid, "\n";
+        releaseLock('d1', $uuid);
+    }
 }
 
-testLock();
+//testLock();
